@@ -1,0 +1,20 @@
+#!/bin/bash
+USER='gitbot'
+GITDIR='/home/${USER}/repos/'
+WEBROOT='/var/www/'
+SITENAME='www.mywebsite.com'
+BRANCHNAME='develop'
+while read oldrev newrev ref
+do
+	if [[ $ref =~ .*/$BRANCHNAME$ ]];
+	then
+		echo "Develop ref received.  Deploying develop branch to ${SITENAME}..."
+		sudo /home/$USER/bin/$USER-permissions $WEBROOT
+		git --work-tree=$WEBROOT --git-dir=$GITDIR checkout -f $BRANCHNAME
+#		sudo /home/$USER/bin/wordpress-permissions $WEBROOT
+		echo $(date) >> /home/$USER/logs/$SITENAME/gitdeploy
+		/home/$USER/bin/slacknot -w "https://hooks.slack.com/services/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" -t ":computer:${SITENAME}" -b "The develop branch has been deployed to https://${SITENAME}" -c "#3687FF" -f "Hope it works!" --fallback "The develop branch has been deployed to https://${SITENAME}" > /dev/null
+	else
+		echo "Ref $ref successfully received.  Doing nothing: only the develop branch may be deployed to ${SITENAME}"
+	fi
+done
